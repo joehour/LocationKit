@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "LocationDetection.startDetection(manger : LocationManager) -&gt; ():LocationDetection.swift">
+      </ContextState>
+      <ContextState
+         contextName = "LocationManager.setRegion(locations : [LocationItem]) -&gt; ():LocationManager.swift">
+      </ContextState>
+      <ContextState
+         contextName = "ViewController.(viewDidLoad() -&gt; ()).(closure #2):ViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "LocationRegionDetection.startRegionDetection(manger : LocationManager) -&gt; ():LocationRegionDetection.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "(CLLocationManager!)manger.regionDetection.some.locationManager">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ViewController.viewDidLoad() -&gt; ():ViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "LocationManager.regionNotify(notifyStyle : LocationManager.notifyStyle, requestAccess : LocationManager.requestAccess, locations : [LocationItem], locationAccuracy : LocationManager.locationAccuracy, completion : (Bool, CLLocation) -&gt; ()) -&gt; ():LocationManager.swift">
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
