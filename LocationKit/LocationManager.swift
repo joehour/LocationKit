@@ -11,6 +11,8 @@ import CoreLocation
 
 public class LocationManager: NSObject {
     var regionDetectionList: [DetectionInfo] = []
+    open var requestAccess: RequestAccess = .requestAlwaysAuthorization
+    var backgroundTask: UIBackgroundTaskIdentifier = UIBackgroundTaskInvalid
     
     public override init () {
         //print("LocationKit has been initialised")
@@ -34,7 +36,7 @@ public class LocationManager: NSObject {
         }
     }
 
-    open func getLocation(detectStyle: DetectStyle = .UpdatingLocation, requestAccess: RequestAccess = .requestAlwaysAuthorization, distanceFilter: Double = kCLHeadingFilterNone, locationAccuracy: LocationAccuracy = .Best, detectFrequency: Int = 5, identification: String = "LocationKitDefault", allowsBackgroundLocationUpdates: Bool = false, completion: @escaping (_ Location: JLocationResponse)->(),  error: ((_ ErrorMessage: String) -> Void)? = {_ in}) {
+    open func getLocation(detectStyle: DetectStyle = .UpdatingLocation, distanceFilter: Double = kCLHeadingFilterNone, locationAccuracy: LocationAccuracy = .Best, detectFrequency: Int = 5, identification: String = "LocationKitDefault", completion: @escaping (_ Location: JLocationResponse)->(), error: ((_ ErrorMessage: String) -> Void)? = {_ in}, authorizationChange: ((_ Status: CLAuthorizationStatus) -> Void)? = {_ in}) {
         if regionDetectionList.contains(where: {$0.identification == identification}) {
             error!("The identification is duplicated.")
             return
@@ -53,16 +55,16 @@ public class LocationManager: NSObject {
             item.accuracy = locationAccuracy
             item.distanceFilter = distanceFilter
             item.frequency = detectFrequency
-            item.allowsBackground = allowsBackgroundLocationUpdates
             item.style = "DetectStyle"
             item.lcoationDetection.startLocationDetection(manger: self, detectionItem: item)
             item.locationCompletion = completion
+            item.authorizationCompletion = authorizationChange!
         } else {
             error!("Instances is out of range, please increase the detectInstanceNumber")
         }
     }
 
-    open func regionNotify(notifyStyle: NotifyStyle = .MonitoringRegion, requestAccess: RequestAccess = .requestAlwaysAuthorization, distanceFilter: Double = kCLHeadingFilterNone, locations: [JLocation], locationAccuracy: LocationAccuracy = .Best, detectFrequency: Int = 5, identification: String = "LocationKitDefault", completion: @escaping (_ Region: JRegion)->(), error: ((_ ErrorMessage: String) -> Void)? = {_ in}) {
+    open func regionNotify(notifyStyle: NotifyStyle = .MonitoringRegion, distanceFilter: Double = kCLHeadingFilterNone, locations: [JLocation], locationAccuracy: LocationAccuracy = .Best, detectFrequency: Int = 5, identification: String = "LocationKitDefault", completion: @escaping (_ Region: JRegion)->(), error: ((_ ErrorMessage: String) -> Void)? = {_ in}, authorizationChange: ((_ Status: CLAuthorizationStatus) -> Void)? = {_ in}) {
         if regionDetectionList.contains(where: {$0.identification == identification}) {
             error!("The identification is duplicated!")
             return
@@ -89,12 +91,13 @@ public class LocationManager: NSObject {
             item.locationList = locations
             item.lcoationDetection.startLocationDetection(manger: self, detectionItem: item)
             item.regionCompletion = completion
+            item.authorizationCompletion = authorizationChange!
         } else {
             error!("Instances is out of range, please increase the detectInstanceNumber!")
         }
     }
     
-    open func stopAll(){
+    open func stopAll() {
         if regionDetectionList.count > 0 {
             for detectionItem in regionDetectionList {
                 if detectionItem.lcoationDetection.locationManager != nil {
@@ -134,7 +137,7 @@ public class LocationManager: NSObject {
         }
     }
     
-    open func stop(identification: String){
+    open func stop(identification: String) {
         let list = regionDetectionList.filter({$0.identification == identification })
         if list.count > 0 {
             let detectionItem: DetectionInfo = list.first!
@@ -172,7 +175,18 @@ public class LocationManager: NSObject {
                 detectionItem.identification = "LocationKitDefault" + detectionItem.id.description
             }
         } else {
-            print("Can't find the identification!")
+            print("Can't find this identification!")
         }
+    }
+    
+    internal func startBackgroundTask() {
+        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
+            self?.endBackgroundTask()
+        }
+    }
+    
+    internal func endBackgroundTask() {
+        UIApplication.shared.endBackgroundTask(backgroundTask)
+        backgroundTask = UIBackgroundTaskInvalid
     }
 }

@@ -11,8 +11,10 @@ import CoreLocation
 
 typealias detectCompletionHandler = (_ Location: JLocationResponse) -> Void
 typealias regionCompletionHandler = (_ Region: JRegion) -> Void
+typealias authorizationCompletionHandler = (_ Status: CLAuthorizationStatus) -> Void
 internal var detectCompletionAssociationKey: UInt8 = 0
 internal var regionCompletionAssociationKey: UInt8 = 0
+internal var authorizationCompletionAssociationKey: UInt8 = 0
 
 class DetectCompletionWrapper {
     var completion: (detectCompletionHandler)?
@@ -26,6 +28,14 @@ class RegionCompletionWrapper {
     var completion: (regionCompletionHandler)?
     
     init(_ completion: (regionCompletionHandler)?) {
+        self.completion = completion
+    }
+}
+
+class AuthorizationCompletionWrapper {
+    var completion: (authorizationCompletionHandler)?
+    
+    init(_ completion: (authorizationCompletionHandler)?) {
         self.completion = completion
     }
 }
@@ -70,10 +80,10 @@ public enum NotifyStyle {
     case MonitoringRegion
 }
 
-public class JLocation:CLLocation {
+public class JLocation: CLLocation {
     public var locationRadius: Double!
     public var locationIdentifier: String!
-    public convenience init(latitude: CLLocationDegrees, longitude: CLLocationDegrees, radius: Double, identifier: String){
+    public convenience init(latitude: CLLocationDegrees, longitude: CLLocationDegrees, radius: Double, identifier: String) {
         self.init(latitude: latitude, longitude: longitude)
         locationRadius = radius
         locationIdentifier = identifier
@@ -86,15 +96,15 @@ public class JLocationResponse {
     public var distanceInterval: Double!
 }
 
-public class JRegion:CLCircularRegion {
+public class JRegion: CLCircularRegion {
     public var regionRadius: Double!
     public var regionIdentifier: String!
     public var regionState: RegionState!
-    public var previousEnterIntervalSec: Int! = 0
-    public var previousEnterDate: Date!
+    public var previousIntervalSec: Int! = 0
+    public var previousDate: Date!
     public var firstNotify: Bool = false
     internal var insideActive: Bool = false
-    public convenience init(centerPoint: CLLocationCoordinate2D, radius: CLLocationDistance, identifier: String){
+    public convenience init(centerPoint: CLLocationCoordinate2D, radius: CLLocationDistance, identifier: String) {
         self.init(center: centerPoint, radius: radius, identifier: identifier)
         regionRadius = radius
         regionIdentifier = identifier
@@ -108,7 +118,7 @@ class DetectionInfo {
             return (objc_getAssociatedObject(self, &regionCompletionAssociationKey) as? RegionCompletionWrapper)!.completion!
         }
         set(newValue) {
-            objc_setAssociatedObject(self, &regionCompletionAssociationKey,  RegionCompletionWrapper(newValue), objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN)
+            objc_setAssociatedObject(self, &regionCompletionAssociationKey, RegionCompletionWrapper(newValue), objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN)
         }
     }
     var locationCompletion: detectCompletionHandler {
@@ -116,7 +126,15 @@ class DetectionInfo {
             return (objc_getAssociatedObject(self, &detectCompletionAssociationKey) as? DetectCompletionWrapper)!.completion!
         }
         set(newValue) {
-            objc_setAssociatedObject(self, &detectCompletionAssociationKey,  DetectCompletionWrapper(newValue), objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN)
+            objc_setAssociatedObject(self, &detectCompletionAssociationKey, DetectCompletionWrapper(newValue), objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN)
+        }
+    }
+    var authorizationCompletion: authorizationCompletionHandler {
+        get {
+            return (objc_getAssociatedObject(self, &authorizationCompletionAssociationKey) as? AuthorizationCompletionWrapper)!.completion!
+        }
+        set(newValue) {
+            objc_setAssociatedObject(self, &authorizationCompletionAssociationKey, AuthorizationCompletionWrapper(newValue), objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN)
         }
     }
     internal var id: Int!
@@ -127,7 +145,6 @@ class DetectionInfo {
     internal var detectStyle: DetectStyle!
     internal var distanceFilter: Double!
     internal var frequency: Int!
-    internal var allowsBackground: Bool = false
     internal var insideDatetime: Date!
     internal var outsideDatetime: Date!
     internal var locationList: [JLocation] = []
@@ -135,4 +152,5 @@ class DetectionInfo {
     internal var style: String!
     internal var state: String!
     internal var previousLocation: CLLocation!
+    internal var previousLocationDatetime: Date!
 }

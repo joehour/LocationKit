@@ -15,11 +15,11 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
     var managerId: Int!
     var regionQueue: DispatchQueue!
     var locationQueue: DispatchQueue!
-    
+
     public override init () {
         //print("LocationKit has been initialised")
     }
-    
+
     internal func startLocationDetection(manger: LocationManager, detectionItem: DetectionInfo) {
         locationManager = CLLocationManager()
         managerId = detectionItem.id
@@ -56,6 +56,17 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
             break
         }
         
+        if #available(iOS 9.0, *) {
+            let backgroundModes = Bundle.main.infoDictionary?["UIBackgroundModes"]
+            if backgroundModes != nil {
+                if (backgroundModes as! Array).contains("location") {
+                    locationManager.allowsBackgroundLocationUpdates = true
+                } else {
+                    print("Please turn on BackgroundModes and tick the location update checkbox")
+                }
+            } 
+        }
+        
         switch detectionItem.style {
         case "NotifyStyle":
             setRegion(detectionItem: detectionItem)
@@ -69,7 +80,6 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
                 }
                 break
             case NotifyStyle.UpdatingLocation:
-                //locationManager.distanceFilter = detectionItem.distanceFilter
                 locationManager.startUpdatingLocation()
                 break
             case NotifyStyle.SignificantLocationChanges:
@@ -78,20 +88,15 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
             }
             break
         case "DetectStyle":
-            //locationManager.distanceFilter = detectionItem.distanceFilter
-            if #available(iOS 9.0, *) {
-                if detectionItem.allowsBackground {
-                    locationManager.allowsBackgroundLocationUpdates = true
-                } else {
-                    locationManager.allowsBackgroundLocationUpdates = false
-                }
-            }
             switch detectionItem.detectStyle as DetectStyle {
             case DetectStyle.UpdatingLocation, DetectStyle.Once:
+                if detectionItem.detectStyle == .Once {
+                    detectionItem.frequency = 0
+                    detectionItem.distanceFilter = 0
+                }
                 locationManager.startUpdatingLocation()
                 break
             case DetectStyle.SignificantLocationChanges:
-                //locationManager.distanceFilter = 0
                 locationManager.startMonitoringSignificantLocationChanges()
                 break
             }
@@ -103,7 +108,7 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
         selfManager = manger
     }
     
-    private func setRegion(detectionItem: DetectionInfo){
+    private func setRegion(detectionItem: DetectionInfo) {
         for item in detectionItem.locationList {
             let center = CLLocationCoordinate2DMake(item.coordinate.latitude, item.coordinate.longitude)
             var radius = item.locationRadius!
@@ -117,7 +122,7 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
         }
     }
     
-    private func getPrevious(item: DetectionInfo, style: RegionState) -> Int{
+    private func getPrevious(item: DetectionInfo, style: RegionState) -> Int {
         let dateFormatter = DateFormatter()
         dateFormatter.locale = NSLocale.current
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -148,20 +153,30 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
         }
     }
     
-    internal func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+    private func checkPrevious(item: DetectionInfo) -> Bool {
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = NSLocale.current
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let nowDate = dateFormatter.date(from: dateFormatter.string(from: NSDate() as Date))
+        let unit = Set<Calendar.Component>([.second])
+        let cal = NSCalendar.current
         
+        if item.previousLocationDatetime == nil {
+            item.previousLocationDatetime = nowDate
+            return true
+        } else {
+            let components = cal.dateComponents(unit, from: item.previousLocationDatetime, to: nowDate!)
+            if components.second! - 1 >= item.frequency {
+                item.previousLocationDatetime = nowDate
+                return true
+            } else {
+                return false
+            }
+        }
     }
     
-    internal func locationManager(_ manager: CLLocationManager, didVisit visit: CLVisit) {
-        
-    }
-    
-    internal func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        
-    }
-    
-    internal func locationManager(_ manager: CLLocationManager, didFinishDeferredUpdatesWithError error: Error?) {
-        
+    private func checkStates() -> UIApplicationState {
+        return UIApplication.shared.applicationState
     }
     
     internal func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
@@ -180,9 +195,9 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
                         switch state {
                         case .inside:
                             regionItem.regionState = .inside
-                            regionItem.previousEnterDate = detectionItem.insideDatetime
-                            regionItem.previousEnterIntervalSec = strongSelf.getPrevious(item: detectionItem, style: .inside)
-                            if regionItem.previousEnterIntervalSec == 0 {
+                            regionItem.previousDate = detectionItem.insideDatetime
+                            regionItem.previousIntervalSec = strongSelf.getPrevious(item: detectionItem, style: .inside)
+                            if regionItem.previousIntervalSec == 0 {
                                 regionItem.firstNotify = true
                             } else {
                                 regionItem.firstNotify = false
@@ -191,13 +206,8 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
                             break
                         case .outside:
                             regionItem.regionState = .outside
-                            regionItem.previousEnterDate = detectionItem.insideDatetime
-                            regionItem.previousEnterIntervalSec = strongSelf.getPrevious(item: detectionItem, style: .outside)
-                            if regionItem.previousEnterIntervalSec == 0 {
-                                regionItem.firstNotify = true
-                            } else {
-                                regionItem.firstNotify = false
-                            }
+                            regionItem.previousDate = detectionItem.insideDatetime
+                            regionItem.previousIntervalSec = strongSelf.getPrevious(item: detectionItem, style: .outside)
                             detectionItem.regionCompletion(regionItem)
                             break
                         default:
@@ -207,22 +217,6 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
                 }
             }
         })
-    }
-    
-    func locationManager(_ manager: CLLocationManager, monitoringDidFailFor region: CLRegion?, withError error: Error) {
-        print("Region monitoring failed: \(region!.identifier)")
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
-        if region is CLCircularRegion {
-            
-        }
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
-        if region is CLCircularRegion {
-
-        }
     }
     
     internal func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -247,9 +241,9 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
                                     if !regionItem.insideActive {
                                         regionItem.regionState = .inside
                                         regionItem.insideActive = true
-                                        regionItem.previousEnterDate = detectionItem.insideDatetime
-                                        regionItem.previousEnterIntervalSec = strongSelf.getPrevious(item: detectionItem, style: .inside)
-                                        if regionItem.previousEnterIntervalSec == 0 {
+                                        regionItem.previousDate = detectionItem.insideDatetime
+                                        regionItem.previousIntervalSec = strongSelf.getPrevious(item: detectionItem, style: .inside)
+                                        if regionItem.previousIntervalSec == 0 {
                                             regionItem.firstNotify = true
                                         } else {
                                             regionItem.firstNotify = false
@@ -261,13 +255,8 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
                                     if  regionItem.insideActive {
                                         regionItem.regionState = .outside
                                         regionItem.insideActive = false
-                                        regionItem.previousEnterDate = detectionItem.outsideDatetime
-                                        regionItem.previousEnterIntervalSec = strongSelf.getPrevious(item: detectionItem, style: .outside)
-                                        if regionItem.previousEnterIntervalSec == 0 {
-                                            regionItem.firstNotify = true
-                                        } else {
-                                            regionItem.firstNotify = false
-                                        }
+                                        regionItem.previousDate = detectionItem.outsideDatetime
+                                        regionItem.previousIntervalSec = strongSelf.getPrevious(item: detectionItem, style: .outside)
                                         detectionItem.regionCompletion(regionItem)
                                     }
                                 }
@@ -275,48 +264,114 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
                         }
                     }
                     if detectionItem.notifyStyle == .UpdatingLocation {
-                        detectionItem.lcoationDetection.locationManager.stopUpdatingLocation()
-                        detectionItem.state = "Stop"
-                        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(detectionItem.frequency)) {
+                        if detectionItem.access == .requestAlwaysAuthorization || UIApplication.shared.applicationState == .active {
+                            detectionItem.lcoationDetection.locationManager.stopUpdatingLocation()
+                            detectionItem.state = "Stop"
+                            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(detectionItem.frequency)) {
                             guard let manager =  detectionItem.lcoationDetection.locationManager else { return }
                             manager.startUpdatingLocation()
                             detectionItem.state = "Start"
+                            }
                         }
                     }
                 } else {
                     if detectionItem.detectStyle != .SignificantLocationChanges {
-                        detectionItem.lcoationDetection.locationManager.stopUpdatingLocation()
-                        detectionItem.state = "Stop"
                         if detectionItem.detectStyle == .Once {
+                            detectionItem.lcoationDetection.locationManager.stopUpdatingLocation()
                             detectionItem.lcoationDetection.locationManager = nil
                             detectionItem.identification = "LocationKitDefault" + detectionItem.id.description
-                        } else if detectionItem.detectStyle == .UpdatingLocation {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(detectionItem.frequency)) {
-                                guard let manager =  detectionItem.lcoationDetection.locationManager else { return }
-                                manager.startUpdatingLocation()
-                                detectionItem.state = "Start"
+                        } else {
+                            if detectionItem.access == .requestAlwaysAuthorization || UIApplication.shared.applicationState == .active {
+                                detectionItem.lcoationDetection.locationManager.stopUpdatingLocation()
+                                detectionItem.state = "Stop"
+                                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(detectionItem.frequency)) {
+                                    guard let manager =  detectionItem.lcoationDetection.locationManager else { return }
+                                    manager.startUpdatingLocation()
+                                    detectionItem.state = "Start"
+                                }
                             }
                         }
                     }
                     
-                    var response: JLocationResponse = JLocationResponse()
+                    let response: JLocationResponse = JLocationResponse()
                     response.currentLocation = locations[0]
                     if detectionItem.previousLocation != nil {
                         response.previousLocation = detectionItem.previousLocation
                         response.distanceInterval = response.currentLocation.distance(from: response.previousLocation)
                         if response.distanceInterval >= detectionItem.distanceFilter {
-                            detectionItem.locationCompletion(response)
+                            if detectionItem.access == .requestWhenInUseAuthorization && UIApplication.shared.applicationState == .background {
+                                if strongSelf.checkPrevious(item: detectionItem) {
+                                    detectionItem.locationCompletion(response)
+                                }
+                            } else {
+                                detectionItem.locationCompletion(response)
+                            }
+                            detectionItem.previousLocation = response.currentLocation
                         }
                     } else {
                         response.previousLocation = response.currentLocation
                         response.distanceInterval = 0
-                        detectionItem.locationCompletion(response)
+                        if detectionItem.access == .requestWhenInUseAuthorization && UIApplication.shared.applicationState == .background {
+                            if strongSelf.checkPrevious(item: detectionItem) {
+                                detectionItem.locationCompletion(response)
+                            }
+                        } else {
+                            detectionItem.locationCompletion(response)
+                        }
+                        detectionItem.previousLocation = response.currentLocation
                     }
-                    detectionItem.previousLocation = response.currentLocation
-
                 }
             }
             })
+    }
+    
+    internal func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        guard let detectionItem: DetectionInfo = selfManager.regionDetectionList.filter({$0.id == managerId}).first else { return }
+        switch status {
+        case .authorizedAlways:
+            detectionItem.access = .requestAlwaysAuthorization
+            if selfManager.backgroundTask == UIBackgroundTaskInvalid {
+                selfManager.startBackgroundTask()
+            }
+            break
+        case .authorizedWhenInUse:
+            detectionItem.access = .requestWhenInUseAuthorization
+            if selfManager.backgroundTask != UIBackgroundTaskInvalid {
+                selfManager.endBackgroundTask()
+            }
+            break
+        default:
+            break
+        }
+        detectionItem.authorizationCompletion(status)
+    }
+    
+    internal func locationManager(_ manager: CLLocationManager, monitoringDidFailFor region: CLRegion?, withError error: Error) {
+        print("Region monitoring failed: \(region!.identifier)")
+    }
+    
+    internal func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
+        if region is CLCircularRegion {
+            
+        }
+    }
+    
+    internal func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
+        if region is CLCircularRegion {
+            
+        }
+    }
+    
+    internal func locationManager(_ manager: CLLocationManager, didVisit visit: CLVisit) {
+        
+    }
+    
+    internal func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        
+    }
+    
+    internal func locationManager(_ manager: CLLocationManager, didFinishDeferredUpdatesWithError error: Error?) {
+        
     }
     
     internal func locationManagerDidPauseLocationUpdates(_ manager: CLLocationManager) {
