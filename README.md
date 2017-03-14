@@ -27,15 +27,13 @@ Check out [Get Started](https://guides.cocoapods.org/using/getting-started.html)
 
 To use LocationKit in your project add the following 'Podfile' to your project
 
-       source 'https://github.com/joehour/LocationKit.git'
-       platform :ios, '8.0'
-       use_frameworks!
-
-       pod 'NotificationBanner', '~> 1.0.0’
+    pod 'JLocationKit', '~> 1.0.0'
 
 Then run:
 
     pod install
+    
+Go ahead and import JLocationKit
 
 ### Source Code
 Copy the LocationKit Directory to your project.
