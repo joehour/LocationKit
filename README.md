@@ -23,7 +23,19 @@ LocationKit provide asynchronous block-based way to get the current location and
 
 ### CocoaPods
 
-soon~
+Check out [Get Started](https://guides.cocoapods.org/using/getting-started.html) tab on [cocoapods.org](http://cocoapods.org/).
+
+To use LocationKit in your project add the following 'Podfile' to your project
+
+       source 'https://github.com/joehour/LocationKit.git'
+       platform :ios, '8.0'
+       use_frameworks!
+
+       pod 'NotificationBanner', '~> 1.0.0’
+
+Then run:
+
+    pod install
 
 ### Source Code
 Copy the LocationKit Directory to your project.
@@ -378,6 +390,8 @@ If you want LocationKit to manage more than ten simultaneous location service, y
 ```swift
 let location: LocationManager = LocationManager(detectInstanceNumber: 20)
 ```
+
+[Documentation ↩︎](#documentation)
 
 ##License
 
