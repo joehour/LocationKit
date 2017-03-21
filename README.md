@@ -1,10 +1,10 @@
-#LocationKit
+# LocationKit
 
 ***An easy way to get the device's current location and geographical region monitoring on iOS(swift).***
 
 LocationKit provide asynchronous block-based way to get the current location and region monitoring. It can manages multiple simultaneous location and region requests. Each request can specify its own setting like detect type(Once, UpdatingLocation, or SignificantLocationChanges), accuracy level, detect frequency, and distance filter.
 
-##Features
+## Features
 
 * [x] Asynchronous block-based.
 * [x] Get location. (Once, UpdatingLocation, or SignificantLocationChanges)
@@ -13,12 +13,12 @@ LocationKit provide asynchronous block-based way to get the current location and
 * [x] Manages multiple simultaneous location service.
 
 
-##Requirements
+## Requirements
 
 - iOS 8.0+
 - Xcode 8.0+ Swift 3
 
-##Installation
+## Installation
 
 
 ### CocoaPods
@@ -40,12 +40,12 @@ Copy the LocationKit Directory to your project.
 Go ahead and import LocationKit to your file.
 
 
-##Example
+## Example
 
 Please check out the Example project included.
 
 
-##<a name="documentation"></a>Documentation
+## <a name="documentation"></a>Documentation
 
 * **[Prerequisites](#prerequisites)**
 * **[Get Current User Location](#getLocation)**
@@ -89,7 +89,7 @@ location.requestAccess = .requestAlwaysAuthorization //default is .requestAlways
 
 [Documentation ↩︎](#documentation)
 
-###<a name="getLocation_once"></a>Get Location (Once)
+### <a name="getLocation_once"></a>Get Location (Once)
 
 Get the device's current location(.Once style), then stop service automatically.
 
@@ -106,7 +106,7 @@ location.getLocation(detectStyle: .Once, completion: { (loc) in
 ```
 [Documentation ↩︎](#documentation)
 
-###<a name="getLocation_continuous"></a>Get Location (Continuous)
+### <a name="getLocation_continuous"></a>Get Location (Continuous)
 
 Get the device's current location(.UpdatingLocation style).
 You must stop service manually.
@@ -162,7 +162,7 @@ location.getLocation(detectStyle: .UpdatingLocation, distanceFilter: 10, locatio
 ```
 [Documentation ↩︎](#documentation)
 
-###<a name="getLocation_significant"></a> Get Location (Significant Location Changes)
+### <a name="getLocation_significant"></a> Get Location (Significant Location Changes)
 
 If you use the .SignificantLocationChanges detectStyle to get location, this request will response new event only when it detects changes to the device’s associated cell towers, resulting in less frequent updates and significantly lower power usage, even when your app is terminated.(need requestAlwaysAuthorization requestAccess) 
 
@@ -181,7 +181,7 @@ location.getLocation(detectStyle: .SignificantLocationChanges, distanceFilter: 0
 
 [Documentation ↩︎](#documentation)
 
-###<a name="getLocation_response"></a> Location Response Information
+### <a name="getLocation_response"></a> Location Response Information
 
 ```swift
 public class JLocationResponse {
@@ -209,7 +209,7 @@ locationList.append(item)
 ```
 [Documentation ↩︎](#documentation)
 
-###<a name="regionMonitoring_standard"></a> Region monitoring (Standard)
+### <a name="regionMonitoring_standard"></a> Region monitoring (Standard)
 
 It is a standard region monitoring way by didDetermineState function(.MonitoringRegion style).
 In this way, you can monitor region even when your app is terminated(need requestAlwaysAuthorization requestAccess).
@@ -229,7 +229,7 @@ location.regionNotify(notifyStyle: .MonitoringRegion, locations: locationList, c
 
 [Documentation ↩︎](#documentation)
 
-###<a name="regionMonitoring_updating"></a>Region monitoring (Updating Location)
+### <a name="regionMonitoring_updating"></a>Region monitoring (Updating Location)
 
 In this way, you can monitor more than 20 regions(.UpdatingLocation style).
 But, please note that can't monitor regions when your app is terminated.
@@ -248,7 +248,7 @@ location.regionNotify(notifyStyle: .UpdatingLocation, distanceFilter: 0, locatio
 
 [Documentation ↩︎](#documentation)
 
-###<a name="regionMonitoring_significant"></a> Region monitoring (Significant Location Changes)
+### <a name="regionMonitoring_significant"></a> Region monitoring (Significant Location Changes)
 
 In this way, you can monitor more than 20 regions even when your app is terminated(need requestAlwaysAuthorization requestAccess).
 But this request will response new event only when it detects changes to the device’s associated cell towers.
@@ -266,7 +266,7 @@ location.regionNotify(notifyStyle: .SignificantLocationChanges, locations: locat
 
 [Documentation ↩︎](#documentation)
 
-###<a name="regionMonitoring_response"></a> Region Response Information
+### <a name="regionMonitoring_response"></a> Region Response Information
 ```swift
 public class JRegion:CLCircularRegion {
     public var regionRadius: Double! //the radius of region
@@ -391,7 +391,7 @@ let location: LocationManager = LocationManager(detectInstanceNumber: 20)
 
 [Documentation ↩︎](#documentation)
 
-##License
+## License
 
 LocationKit is available under the MIT License.
 
