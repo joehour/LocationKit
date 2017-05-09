@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
 s.name = "JLocationKit"
-s.version = "1.0.0"
+s.version = “1.0.1”
 s.license = "MIT"
 s.summary = "An easy way to get the device's current location and geographical region monitoring on iOS(swift)."
 s.homepage = "https://github.com/joehour/LocationKit"
