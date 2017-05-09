@@ -275,11 +275,44 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
                         }
                     }
                 } else {
+                    if detectionItem.lcoationDetection.locationManager != nil {
+                        let response: JLocationResponse = JLocationResponse()
+                        response.currentLocation = locations[0]
+                        if detectionItem.previousLocation != nil {
+                            response.previousLocation = detectionItem.previousLocation
+                            response.distanceInterval = response.currentLocation.distance(from: response.previousLocation)
+                            if response.distanceInterval >= detectionItem.distanceFilter {
+                                if detectionItem.access == .requestWhenInUseAuthorization && UIApplication.shared.applicationState == .background {
+                                    if strongSelf.checkPrevious(item: detectionItem) {
+                                        detectionItem.locationCompletion(response)
+                                    }
+                                } else {
+                                    detectionItem.locationCompletion(response)
+                                }
+                                detectionItem.previousLocation = response.currentLocation
+                            }
+                        } else {
+                            response.previousLocation = response.currentLocation
+                            response.distanceInterval = 0
+                            if detectionItem.access == .requestWhenInUseAuthorization && UIApplication.shared.applicationState == .background {
+                                if strongSelf.checkPrevious(item: detectionItem) {
+                                    detectionItem.locationCompletion(response)
+                                }
+                            } else {
+                                detectionItem.locationCompletion(response)
+                            }
+                            detectionItem.previousLocation = response.currentLocation
+                        }
+
+                    }
+                    
                     if detectionItem.detectStyle != .SignificantLocationChanges {
                         if detectionItem.detectStyle == .Once {
-                            detectionItem.lcoationDetection.locationManager.stopUpdatingLocation()
-                            detectionItem.lcoationDetection.locationManager = nil
-                            detectionItem.identification = "LocationKitDefault" + detectionItem.id.description
+                            if detectionItem.lcoationDetection.locationManager != nil
+                            {
+                                detectionItem.lcoationDetection.locationManager.stopUpdatingLocation()
+                                detectionItem.lcoationDetection.locationManager = nil
+                            }
                         } else {
                             if detectionItem.access == .requestAlwaysAuthorization || UIApplication.shared.applicationState == .active {
                                 detectionItem.lcoationDetection.locationManager.stopUpdatingLocation()
@@ -291,34 +324,6 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
                                 }
                             }
                         }
-                    }
-                    
-                    let response: JLocationResponse = JLocationResponse()
-                    response.currentLocation = locations[0]
-                    if detectionItem.previousLocation != nil {
-                        response.previousLocation = detectionItem.previousLocation
-                        response.distanceInterval = response.currentLocation.distance(from: response.previousLocation)
-                        if response.distanceInterval >= detectionItem.distanceFilter {
-                            if detectionItem.access == .requestWhenInUseAuthorization && UIApplication.shared.applicationState == .background {
-                                if strongSelf.checkPrevious(item: detectionItem) {
-                                    detectionItem.locationCompletion(response)
-                                }
-                            } else {
-                                detectionItem.locationCompletion(response)
-                            }
-                            detectionItem.previousLocation = response.currentLocation
-                        }
-                    } else {
-                        response.previousLocation = response.currentLocation
-                        response.distanceInterval = 0
-                        if detectionItem.access == .requestWhenInUseAuthorization && UIApplication.shared.applicationState == .background {
-                            if strongSelf.checkPrevious(item: detectionItem) {
-                                detectionItem.locationCompletion(response)
-                            }
-                        } else {
-                            detectionItem.locationCompletion(response)
-                        }
-                        detectionItem.previousLocation = response.currentLocation
                     }
                 }
             }
