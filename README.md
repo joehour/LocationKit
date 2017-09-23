@@ -27,7 +27,7 @@ Check out [Get Started](https://guides.cocoapods.org/using/getting-started.html)
 
 To use LocationKit in your project add the following 'Podfile' to your project
 
-    pod 'JLocationKit', '~> 1.0.0'
+    pod 'JLocationKit', '~> 1.0.2'
 
 Then run:
 
