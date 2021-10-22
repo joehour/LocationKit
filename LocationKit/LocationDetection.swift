@@ -137,8 +137,8 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
             } else {
                 let components = cal.dateComponents(unit, from: item.insideDatetime, to: nowDate!)
                 item.insideDatetime = nowDate
-                guard let sec: Int = components.second! - 1 else { return -1 }
-                return sec
+                guard let sec = components.second else { return -1 }
+                return sec - 1
             }
         case .outside:
             if item.insideDatetime == nil {
@@ -147,8 +147,8 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
             } else {
                 let components = cal.dateComponents(unit, from: item.insideDatetime, to: nowDate!)
                 item.outsideDatetime = nowDate
-                guard let sec: Int = components.second! - 1 else { return -1 }
-                return sec
+                guard let sec = components.second else { return -1 }
+                return sec - 1
             }
         }
     }
@@ -175,7 +175,7 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
         }
     }
     
-    private func checkStates() -> UIApplicationState {
+    private func checkStates() -> UIApplication.State {
         return UIApplication.shared.applicationState
     }
     
@@ -335,13 +335,13 @@ internal class LocationDetection: NSObject, CLLocationManagerDelegate {
         switch status {
         case .authorizedAlways:
             detectionItem.access = .requestAlwaysAuthorization
-            if selfManager.backgroundTask == UIBackgroundTaskInvalid {
+            if selfManager.backgroundTask == UIBackgroundTaskIdentifier.invalid {
                 selfManager.startBackgroundTask()
             }
             break
         case .authorizedWhenInUse:
             detectionItem.access = .requestWhenInUseAuthorization
-            if selfManager.backgroundTask != UIBackgroundTaskInvalid {
+            if selfManager.backgroundTask != UIBackgroundTaskIdentifier.invalid {
                 selfManager.endBackgroundTask()
             }
             break

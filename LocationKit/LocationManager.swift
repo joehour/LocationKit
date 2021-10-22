@@ -12,7 +12,7 @@ import CoreLocation
 public class LocationManager: NSObject {
     var regionDetectionList: [DetectionInfo] = []
     open var requestAccess: RequestAccess = .requestAlwaysAuthorization
-    var backgroundTask: UIBackgroundTaskIdentifier = UIBackgroundTaskInvalid
+    var backgroundTask: UIBackgroundTaskIdentifier = UIBackgroundTaskIdentifier.invalid
     
     public override init () {
         //print("LocationKit has been initialised")
@@ -187,6 +187,6 @@ public class LocationManager: NSObject {
     
     internal func endBackgroundTask() {
         UIApplication.shared.endBackgroundTask(backgroundTask)
-        backgroundTask = UIBackgroundTaskInvalid
+        backgroundTask = UIBackgroundTaskIdentifier.invalid
     }
 }
